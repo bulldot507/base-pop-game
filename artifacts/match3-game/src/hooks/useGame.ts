@@ -17,9 +17,15 @@ export type Phase =
   | "falling"
   | "filling";
 
+export interface GameCallbacks {
+  onSwapAttempt?: () => void;
+  onMatchFound?: () => void;
+  onSwapFail?: () => void;
+}
+
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
-export function useGame() {
+export function useGame(callbacks: GameCallbacks = {}) {
   const [grid, setGrid] = useState<number[][]>(() => initGrid());
   const [score, setScore] = useState(0);
   const [selected, setSelected] = useState<[number, number] | null>(null);
@@ -29,14 +35,22 @@ export function useGame() {
     [[number, number], [number, number]] | null
   >(null);
   const processingRef = useRef(false);
+  const cbRef = useRef(callbacks);
+  cbRef.current = callbacks;
 
   const processMatches = useCallback(async (startGrid: number[][]) => {
     let current = startGrid;
     let totalScore = 0;
+    let firstMatch = true;
 
     while (true) {
       const matches = findMatches(current);
       if (matches.size === 0) break;
+
+      if (firstMatch) {
+        cbRef.current.onMatchFound?.();
+        firstMatch = false;
+      }
 
       totalScore += matches.size * 10 + Math.max(0, matches.size - 3) * 5;
 
@@ -83,6 +97,7 @@ export function useGame() {
         return;
       }
 
+      cbRef.current.onSwapAttempt?.();
       setSelected(null);
       processingRef.current = true;
 
@@ -95,6 +110,7 @@ export function useGame() {
 
       const matches = findMatches(swapped);
       if (matches.size === 0) {
+        cbRef.current.onSwapFail?.();
         setPhase("swapping-back");
         const restored = swapCells(swapped, selRow, selCol, row, col);
         setGrid([...restored.map((r) => [...r])]);
@@ -116,6 +132,7 @@ export function useGame() {
       const c2 = col + dc;
       if (r2 < 0 || r2 >= 8 || c2 < 0 || c2 >= 8) return;
 
+      cbRef.current.onSwapAttempt?.();
       setSelected(null);
       processingRef.current = true;
 
@@ -128,6 +145,7 @@ export function useGame() {
 
       const matches = findMatches(swapped);
       if (matches.size === 0) {
+        cbRef.current.onSwapFail?.();
         setPhase("swapping-back");
         const restored = swapCells(swapped, row, col, r2, c2);
         setGrid([...restored.map((r) => [...r])]);

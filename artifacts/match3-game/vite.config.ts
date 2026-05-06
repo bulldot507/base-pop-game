@@ -32,6 +32,9 @@ export default defineConfig({
     "import.meta.env.VITE_CDP_API_KEY": JSON.stringify(
       process.env.VITE_CDP_API_KEY ?? process.env.CDP_API_KEY ?? ""
     ),
+    "import.meta.env.VITE_LEADERBOARD_CONTRACT_ADDRESS": JSON.stringify(
+      process.env.VITE_LEADERBOARD_CONTRACT_ADDRESS ?? ""
+    ),
     global: "globalThis",
   },
   optimizeDeps: {

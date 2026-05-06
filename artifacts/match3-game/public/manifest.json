@@ -1,0 +1,27 @@
+{
+  "name": "Candy Crush · Match-3 on Base",
+  "short_name": "Candy Crush",
+  "description": "A Match-3 puzzle game with on-chain high scores on Base Mainnet. Connect your wallet, match candies, and save your score forever.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d0520",
+  "theme_color": "#1a0a3a",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    {
+      "src": "/og-image.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-image.svg",
+      "sizes": "1200x630",
+      "type": "image/svg+xml",
+      "label": "Candy Crush Match-3 game board"
+    }
+  ]
+}

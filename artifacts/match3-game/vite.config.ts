@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
+import type { Plugin } from "vite";
 
 const rawPort = process.env.PORT;
 
@@ -26,6 +27,40 @@ if (!basePath) {
   );
 }
 
+// Resolve the canonical app URL from Replit domains or a fallback
+const replitDomain = process.env.REPLIT_DOMAINS?.split(",")[0]?.trim();
+const appUrl = replitDomain
+  ? `https://${replitDomain}`
+  : "https://candy-crush.replit.app";
+
+// Build the Farcaster Frame v2 (MiniApp) meta-tag content
+const frameContent = JSON.stringify({
+  version: "next",
+  imageUrl: `${appUrl}/og-image.svg`,
+  button: {
+    title: "🍬 Play Candy Crush",
+    action: {
+      type: "launch_frame",
+      name: "Candy Crush on Base",
+      url: appUrl,
+      splashImageUrl: `${appUrl}/og-image.svg`,
+      splashBackgroundColor: "#1a0a3a",
+    },
+  },
+});
+
+// Vite plugin: inject frame content + resolved app URL into index.html
+function htmlInjectPlugin(): Plugin {
+  return {
+    name: "html-inject",
+    transformIndexHtml(html) {
+      return html
+        .replace(/__VITE_APP_URL__/g, appUrl)
+        .replace(/__FC_FRAME_CONTENT__/g, frameContent.replace(/'/g, "&#39;"));
+    },
+  };
+}
+
 export default defineConfig({
   base: basePath,
   define: {
@@ -35,12 +70,14 @@ export default defineConfig({
     "import.meta.env.VITE_LEADERBOARD_CONTRACT_ADDRESS": JSON.stringify(
       process.env.VITE_LEADERBOARD_CONTRACT_ADDRESS ?? ""
     ),
+    "import.meta.env.VITE_APP_URL": JSON.stringify(appUrl),
     global: "globalThis",
   },
   optimizeDeps: {
     include: ["buffer"],
   },
   plugins: [
+    htmlInjectPlugin(),
     react(),
     tailwindcss(),
     runtimeErrorOverlay(),

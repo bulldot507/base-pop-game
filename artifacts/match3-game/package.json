@@ -76,5 +76,8 @@
     "wagmi": "^2.14.16",
     "wouter": "^3.3.5",
     "zod": "catalog:"
+  },
+  "dependencies": {
+    "@farcaster/miniapp-sdk": "^0.3.0"
   }
 }

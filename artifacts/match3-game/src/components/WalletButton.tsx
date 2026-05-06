@@ -1,7 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useConnect, useAccount, useDisconnect } from "wagmi";
-import { Wallet, ChevronDown, LogOut, Copy, Check, ExternalLink } from "lucide-react";
+import { useConnect, useAccount, useDisconnect, useChainId, useSwitchChain } from "wagmi";
+import { base } from "viem/chains";
+import { Wallet, ChevronDown, LogOut, Copy, Check, ExternalLink, AlertTriangle, ArrowRightLeft } from "lucide-react";
+
+const BASE_CHAIN_ID = base.id; // 8453
 
 function shortAddress(addr: string) {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
@@ -27,21 +30,23 @@ const WALLET_META: Record<string, { label: string; icon: string }> = {
 };
 
 function getWalletMeta(connectorId: string) {
-  return (
-    WALLET_META[connectorId] ??
-    WALLET_META["injected"]
-  );
+  return WALLET_META[connectorId] ?? WALLET_META["injected"];
 }
 
 export default function WalletButton() {
   const { connect, connectors, isPending } = useConnect();
   const { address, isConnected, connector } = useAccount();
   const { disconnect } = useDisconnect();
+  const chainId = useChainId();
+  const { switchChain, isPending: isSwitching } = useSwitchChain();
   const [showModal, setShowModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [copied, setCopied] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  const isWrongChain = isConnected && chainId !== BASE_CHAIN_ID;
+
+  // Close menu on outside click
   useEffect(() => {
     if (!showMenu) return;
     function handleClick(e: MouseEvent) {
@@ -60,6 +65,46 @@ export default function WalletButton() {
     setTimeout(() => setCopied(false), 1800);
   }
 
+  function handleSwitchToBase() {
+    switchChain({ chainId: BASE_CHAIN_ID });
+    setShowMenu(false);
+  }
+
+  // ── Wrong chain banner ──
+  if (isWrongChain) {
+    return (
+      <motion.button
+        onClick={handleSwitchToBase}
+        disabled={isSwitching}
+        whileTap={{ scale: 0.95 }}
+        whileHover={{ scale: 1.03 }}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          padding: "6px 12px",
+          borderRadius: 12,
+          border: "1px solid rgba(251,191,36,0.45)",
+          background: "linear-gradient(135deg, rgba(251,191,36,0.18) 0%, rgba(245,158,11,0.12) 100%)",
+          boxShadow: "0 2px 10px rgba(0,0,0,0.3)",
+          cursor: isSwitching ? "wait" : "pointer",
+          color: "#fcd34d",
+          fontSize: 12,
+          fontWeight: 700,
+          whiteSpace: "nowrap",
+        }}
+      >
+        {isSwitching ? (
+          <ArrowRightLeft size={13} style={{ animation: "spin 1s linear infinite" }} />
+        ) : (
+          <AlertTriangle size={13} />
+        )}
+        {isSwitching ? "Switching…" : "Switch to Base"}
+      </motion.button>
+    );
+  }
+
+  // ── Connected, correct chain ──
   if (isConnected && address) {
     return (
       <div className="relative" ref={menuRef}>
@@ -74,8 +119,7 @@ export default function WalletButton() {
             padding: "6px 12px",
             borderRadius: 12,
             border: "1px solid rgba(99,102,241,0.35)",
-            background:
-              "linear-gradient(135deg, rgba(99,102,241,0.18) 0%, rgba(167,92,250,0.12) 100%)",
+            background: "linear-gradient(135deg, rgba(99,102,241,0.18) 0%, rgba(167,92,250,0.12) 100%)",
             boxShadow: "0 2px 10px rgba(0,0,0,0.3)",
             cursor: "pointer",
             color: "#c4b5fd",
@@ -110,8 +154,7 @@ export default function WalletButton() {
                 minWidth: 190,
                 borderRadius: 12,
                 border: "1px solid rgba(99,102,241,0.3)",
-                background:
-                  "linear-gradient(135deg, rgba(30,15,70,0.97) 0%, rgba(20,10,50,0.99) 100%)",
+                background: "linear-gradient(135deg, rgba(30,15,70,0.97) 0%, rgba(20,10,50,0.99) 100%)",
                 boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
                 padding: "6px",
                 zIndex: 9999,
@@ -127,37 +170,19 @@ export default function WalletButton() {
                   textTransform: "uppercase",
                 }}
               >
-                Connected on Base
+                Connected · Base Mainnet
               </div>
               <button
                 onClick={copyAddress}
                 style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "8px 10px",
-                  borderRadius: 8,
-                  border: "none",
-                  background: "transparent",
-                  cursor: "pointer",
-                  color: "#e9d5ff",
-                  fontSize: 13,
-                  transition: "background 0.12s",
+                  width: "100%", display: "flex", alignItems: "center", gap: 8,
+                  padding: "8px 10px", borderRadius: 8, border: "none",
+                  background: "transparent", cursor: "pointer", color: "#e9d5ff", fontSize: 13,
                 }}
-                onMouseEnter={(e) =>
-                  ((e.target as HTMLElement).style.background =
-                    "rgba(99,102,241,0.15)")
-                }
-                onMouseLeave={(e) =>
-                  ((e.target as HTMLElement).style.background = "transparent")
-                }
+                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "rgba(99,102,241,0.15)")}
+                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
               >
-                {copied ? (
-                  <Check size={14} style={{ color: "#4ade80" }} />
-                ) : (
-                  <Copy size={14} />
-                )}
+                {copied ? <Check size={14} style={{ color: "#4ade80" }} /> : <Copy size={14} />}
                 {copied ? "Copied!" : shortAddress(address)}
               </button>
               <a
@@ -165,65 +190,27 @@ export default function WalletButton() {
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "8px 10px",
-                  borderRadius: 8,
-                  border: "none",
-                  background: "transparent",
-                  cursor: "pointer",
-                  color: "#e9d5ff",
-                  fontSize: 13,
+                  width: "100%", display: "flex", alignItems: "center", gap: 8,
+                  padding: "8px 10px", borderRadius: 8, border: "none",
+                  background: "transparent", cursor: "pointer", color: "#e9d5ff", fontSize: 13,
                   textDecoration: "none",
-                  transition: "background 0.12s",
                 }}
-                onMouseEnter={(e) =>
-                  ((e.currentTarget as HTMLElement).style.background =
-                    "rgba(99,102,241,0.15)")
-                }
-                onMouseLeave={(e) =>
-                  ((e.currentTarget as HTMLElement).style.background =
-                    "transparent")
-                }
+                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "rgba(99,102,241,0.15)")}
+                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
               >
                 <ExternalLink size={14} />
                 View on BaseScan
               </a>
-              <div
-                style={{
-                  height: 1,
-                  background: "rgba(99,102,241,0.18)",
-                  margin: "4px 0",
-                }}
-              />
+              <div style={{ height: 1, background: "rgba(99,102,241,0.18)", margin: "4px 0" }} />
               <button
-                onClick={() => {
-                  disconnect();
-                  setShowMenu(false);
-                }}
+                onClick={() => { disconnect(); setShowMenu(false); }}
                 style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "8px 10px",
-                  borderRadius: 8,
-                  border: "none",
-                  background: "transparent",
-                  cursor: "pointer",
-                  color: "#fca5a5",
-                  fontSize: 13,
-                  transition: "background 0.12s",
+                  width: "100%", display: "flex", alignItems: "center", gap: 8,
+                  padding: "8px 10px", borderRadius: 8, border: "none",
+                  background: "transparent", cursor: "pointer", color: "#fca5a5", fontSize: 13,
                 }}
-                onMouseEnter={(e) =>
-                  ((e.target as HTMLElement).style.background =
-                    "rgba(239,68,68,0.15)")
-                }
-                onMouseLeave={(e) =>
-                  ((e.target as HTMLElement).style.background = "transparent")
-                }
+                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.15)")}
+                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
               >
                 <LogOut size={14} />
                 Disconnect
@@ -235,6 +222,7 @@ export default function WalletButton() {
     );
   }
 
+  // ── Not connected ──
   const uniqueConnectors = connectors.filter(
     (c, i, arr) => arr.findIndex((x) => x.id === c.id) === i
   );
@@ -252,8 +240,7 @@ export default function WalletButton() {
           padding: "6px 14px",
           borderRadius: 12,
           border: "1px solid rgba(99,102,241,0.4)",
-          background:
-            "linear-gradient(135deg, rgba(99,102,241,0.22) 0%, rgba(167,92,250,0.15) 100%)",
+          background: "linear-gradient(135deg, rgba(99,102,241,0.22) 0%, rgba(167,92,250,0.15) 100%)",
           boxShadow: "0 2px 12px rgba(99,102,241,0.3)",
           cursor: "pointer",
           color: "#c4b5fd",
@@ -277,14 +264,9 @@ export default function WalletButton() {
             transition={{ duration: 0.18 }}
             onClick={() => setShowModal(false)}
             style={{
-              position: "fixed",
-              inset: 0,
-              background: "rgba(0,0,0,0.72)",
-              backdropFilter: "blur(4px)",
-              zIndex: 9998,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              position: "fixed", inset: 0,
+              background: "rgba(0,0,0,0.72)", backdropFilter: "blur(4px)",
+              zIndex: 9998, display: "flex", alignItems: "center", justifyContent: "center",
               padding: 20,
             }}
           >
@@ -296,12 +278,9 @@ export default function WalletButton() {
               transition={{ type: "spring", stiffness: 340, damping: 26 }}
               onClick={(e) => e.stopPropagation()}
               style={{
-                width: "100%",
-                maxWidth: 380,
-                borderRadius: 20,
+                width: "100%", maxWidth: 380, borderRadius: 20,
                 border: "1px solid rgba(99,102,241,0.3)",
-                background:
-                  "linear-gradient(160deg, rgba(30,15,70,0.98) 0%, rgba(15,8,40,0.99) 100%)",
+                background: "linear-gradient(160deg, rgba(30,15,70,0.98) 0%, rgba(15,8,40,0.99) 100%)",
                 boxShadow: "0 24px 64px rgba(0,0,0,0.7), 0 0 0 1px rgba(99,102,241,0.1)",
                 padding: 24,
               }}
@@ -309,123 +288,73 @@ export default function WalletButton() {
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
                 <div
                   style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
+                    width: 36, height: 36, borderRadius: 10,
                     background: "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    display: "flex", alignItems: "center", justifyContent: "center",
                   }}
                 >
                   <Wallet size={18} color="white" />
                 </div>
                 <div>
-                  <div
-                    style={{
-                      fontSize: 17,
-                      fontWeight: 800,
-                      color: "#e9d5ff",
-                      letterSpacing: "-0.01em",
-                    }}
-                  >
+                  <div style={{ fontSize: 17, fontWeight: 800, color: "#e9d5ff", letterSpacing: "-0.01em" }}>
                     Connect Wallet
                   </div>
                   <div style={{ fontSize: 12, color: "rgba(196,181,253,0.5)", marginTop: 1 }}>
-                    Base Mainnet · Real ETH
+                    Base Mainnet · Gas fees under $0.01
                   </div>
                 </div>
               </div>
 
-              <p
-                style={{
-                  fontSize: 13,
-                  color: "rgba(196,181,253,0.6)",
-                  marginBottom: 18,
-                  marginTop: 14,
-                  lineHeight: 1.5,
-                }}
-              >
-                Choose a wallet to connect. Gas fees on Base are under $0.01.
+              <p style={{ fontSize: 13, color: "rgba(196,181,253,0.6)", marginBottom: 18, marginTop: 14, lineHeight: 1.5 }}>
+                Connect to save your high score on-chain and compete on the leaderboard.
               </p>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {uniqueConnectors.map((c) => {
                   const meta = getWalletMeta(c.id);
-                  const isLoading = isPending;
                   return (
                     <motion.button
                       key={c.id}
                       onClick={() => {
-                        connect({ connector: c });
+                        connect({ connector: c, chainId: BASE_CHAIN_ID });
                         setShowModal(false);
                       }}
-                      disabled={isLoading}
+                      disabled={isPending}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.97 }}
                       style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 12,
-                        padding: "12px 14px",
-                        borderRadius: 12,
+                        display: "flex", alignItems: "center", gap: 12,
+                        padding: "12px 14px", borderRadius: 12,
                         border: "1px solid rgba(99,102,241,0.22)",
                         background: "rgba(99,102,241,0.08)",
-                        cursor: isLoading ? "wait" : "pointer",
-                        width: "100%",
-                        textAlign: "left",
-                        transition: "background 0.15s, border-color 0.15s",
-                        opacity: isLoading ? 0.7 : 1,
+                        cursor: isPending ? "wait" : "pointer",
+                        width: "100%", textAlign: "left",
+                        opacity: isPending ? 0.7 : 1,
                       }}
                       onMouseEnter={(e) => {
-                        const el = e.currentTarget;
-                        el.style.background = "rgba(99,102,241,0.18)";
-                        el.style.borderColor = "rgba(99,102,241,0.45)";
+                        e.currentTarget.style.background = "rgba(99,102,241,0.18)";
+                        e.currentTarget.style.borderColor = "rgba(99,102,241,0.45)";
                       }}
                       onMouseLeave={(e) => {
-                        const el = e.currentTarget;
-                        el.style.background = "rgba(99,102,241,0.08)";
-                        el.style.borderColor = "rgba(99,102,241,0.22)";
+                        e.currentTarget.style.background = "rgba(99,102,241,0.08)";
+                        e.currentTarget.style.borderColor = "rgba(99,102,241,0.22)";
                       }}
                     >
                       <div
                         style={{
-                          width: 36,
-                          height: 36,
-                          borderRadius: 9,
-                          overflow: "hidden",
-                          flexShrink: 0,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
+                          width: 36, height: 36, borderRadius: 9, overflow: "hidden", flexShrink: 0,
+                          display: "flex", alignItems: "center", justifyContent: "center",
                           background: "rgba(255,255,255,0.06)",
                         }}
                       >
-                        <img
-                          src={meta.icon}
-                          alt={meta.label}
-                          style={{ width: 28, height: 28, objectFit: "contain" }}
-                        />
+                        <img src={meta.icon} alt={meta.label} style={{ width: 28, height: 28, objectFit: "contain" }} />
                       </div>
                       <div>
-                        <div
-                          style={{
-                            fontSize: 14,
-                            fontWeight: 700,
-                            color: "#e9d5ff",
-                            letterSpacing: "-0.01em",
-                          }}
-                        >
+                        <div style={{ fontSize: 14, fontWeight: 700, color: "#e9d5ff", letterSpacing: "-0.01em" }}>
                           {meta.label}
                         </div>
                         {c.id === "coinbaseWalletSDK" && (
-                          <div
-                            style={{
-                              fontSize: 11,
-                              color: "rgba(196,181,253,0.5)",
-                              marginTop: 1,
-                            }}
-                          >
+                          <div style={{ fontSize: 11, color: "rgba(196,181,253,0.5)", marginTop: 1 }}>
                             Email · Passkey · EOA
                           </div>
                         )}
@@ -435,16 +364,8 @@ export default function WalletButton() {
                 })}
               </div>
 
-              <p
-                style={{
-                  fontSize: 11,
-                  color: "rgba(196,181,253,0.3)",
-                  textAlign: "center",
-                  marginTop: 16,
-                  lineHeight: 1.5,
-                }}
-              >
-                By connecting, you agree to interact on Base mainnet using real ETH.
+              <p style={{ fontSize: 11, color: "rgba(196,181,253,0.3)", textAlign: "center", marginTop: 16, lineHeight: 1.5 }}>
+                By connecting, you agree to interact on Base Mainnet using real ETH.
               </p>
             </motion.div>
           </motion.div>

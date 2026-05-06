@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Match-3 Candy Game"
+version = "1.0.0"
+id = "artifacts/match3-game"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22781
+
+[services.development]
+run = "pnpm --filter @workspace/match3-game run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/match3-game", "run", "build" ]
+publicDir = "artifacts/match3-game/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22781"
+BASE_PATH = "/"

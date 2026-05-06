@@ -33,3 +33,8 @@ externalPort = 3000
 
 [nix]
 channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+VITE_LEADERBOARD_CONTRACT_ADDRESS = "0xe1cfEdD2E170874E7708820Ee2D38c90Ac6a5A64"

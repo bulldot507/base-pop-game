@@ -3,6 +3,7 @@ import { RotateCcw, Trophy, Sparkles } from "lucide-react";
 import GameBoard from "../components/GameBoard";
 import { useGame } from "../hooks/useGame";
 import { CANDY_CONFIGS } from "../components/CandyTile";
+import WalletButton from "../components/WalletButton";
 
 export default function GamePage() {
   const {
@@ -63,32 +64,40 @@ export default function GamePage() {
         style={{ paddingTop: "env(safe-area-inset-top, 24px)" }}
       >
         {/* Header */}
-        <div className="w-full flex flex-col items-center gap-1">
-          <div className="flex items-center gap-2">
-            <Sparkles
-              size={22}
-              style={{ color: "#f59e0b", filter: "drop-shadow(0 0 6px #f59e0b)" }}
-            />
-            <h1
-              className="text-3xl font-black tracking-tight"
-              style={{
-                background: "linear-gradient(90deg, #f9a8d4 0%, #a78bfa 50%, #67e8f9 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-                letterSpacing: "-0.02em",
-              }}
-            >
-              Candy Crush
-            </h1>
-            <Sparkles
-              size={22}
-              style={{ color: "#f59e0b", filter: "drop-shadow(0 0 6px #f59e0b)" }}
-            />
+        <div className="w-full relative flex items-center justify-center" style={{ minHeight: 48 }}>
+          {/* Centered title */}
+          <div className="flex flex-col items-center gap-0.5">
+            <div className="flex items-center gap-2">
+              <Sparkles
+                size={18}
+                style={{ color: "#f59e0b", filter: "drop-shadow(0 0 6px #f59e0b)" }}
+              />
+              <h1
+                className="text-2xl font-black tracking-tight"
+                style={{
+                  background: "linear-gradient(90deg, #f9a8d4 0%, #a78bfa 50%, #67e8f9 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                Candy Crush
+              </h1>
+              <Sparkles
+                size={18}
+                style={{ color: "#f59e0b", filter: "drop-shadow(0 0 6px #f59e0b)" }}
+              />
+            </div>
+            <p className="text-xs" style={{ color: "rgba(255,255,255,0.38)" }}>
+              Match 3 or more to score!
+            </p>
           </div>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
-            Match 3 or more to score!
-          </p>
+
+          {/* Wallet button — top right */}
+          <div style={{ position: "absolute", right: 0, top: "50%", transform: "translateY(-50%)" }}>
+            <WalletButton />
+          </div>
         </div>
 
         {/* Score + Reset row */}

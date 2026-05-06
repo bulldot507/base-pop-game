@@ -28,6 +28,15 @@ if (!basePath) {
 
 export default defineConfig({
   base: basePath,
+  define: {
+    "import.meta.env.VITE_CDP_API_KEY": JSON.stringify(
+      process.env.VITE_CDP_API_KEY ?? process.env.CDP_API_KEY ?? ""
+    ),
+    global: "globalThis",
+  },
+  optimizeDeps: {
+    include: ["buffer"],
+  },
   plugins: [
     react(),
     tailwindcss(),
@@ -50,6 +59,7 @@ export default defineConfig({
     alias: {
       "@": path.resolve(import.meta.dirname, "src"),
       "@assets": path.resolve(import.meta.dirname, "..", "..", "attached_assets"),
+      buffer: "buffer/",
     },
     dedupe: ["react", "react-dom"],
   },

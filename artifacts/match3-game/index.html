@@ -20,7 +20,7 @@
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Base Pop · Match-3 on Base" />
+    <meta property="og:title" content="Base Pop" />
     <meta property="og:description" content="Match-3 puzzle with on-chain high scores on Base Mainnet. Connect wallet, play, save your score forever." />
     <meta property="og:image" content="https://basepop.space/og-image.svg" />
     <meta property="og:image:width" content="1200" />
@@ -37,8 +37,22 @@
     <!-- Base App ID -->
     <meta name="base:app_id" content="69fb20952763280abf41cd5f" />
 
-    <!-- Farcaster Frame v2 (MiniApp) -->
+    <!--
+      Farcaster Frame v2 — MiniApp (single JSON tag, used by Warpcast / miniapp clients)
+      The __FC_FRAME_CONTENT__ placeholder is replaced at build time by vite.config.ts.
+    -->
     <meta name="fc:frame" content="__FC_FRAME_CONTENT__" />
+
+    <!--
+      Farcaster Frame v1 — individual tags for broad client compatibility.
+      Clients that don't support v2 JSON will fall back to these.
+    -->
+    <meta name="fc:frame:version" content="vNext" />
+    <meta name="fc:frame:image" content="https://basepop.space/og-image.svg" />
+    <meta name="fc:frame:image:aspect_ratio" content="1.91:1" />
+    <meta name="fc:frame:button:1" content="Play Base Pop" />
+    <meta name="fc:frame:button:1:action" content="link" />
+    <meta name="fc:frame:button:1:target" content="https://basepop.space" />
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

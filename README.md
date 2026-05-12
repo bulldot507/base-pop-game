@@ -12,7 +12,7 @@ Base Pop integrates decentralized identity and on-chain mechanics into a seamles
 - **Social:** Farcaster Frames v2 integration for in-feed gameplay.
 - **Hosting:** Static Vite build (optimized for decentralized hosting).
 
-## 💎 Airdrop & Builder Criteria alignment
+## 💎 Builder Criteria alignment
 This project is built following the "Base Builder" ethos:
 1. **OnchainKit Implementation:** Uses `WalletComponents` for a "one-click" Base login experience.
 2. **Mainnet Ready:** Fully configured for Base Mainnet (not just testnet).

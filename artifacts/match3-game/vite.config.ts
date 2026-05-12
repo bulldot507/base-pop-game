@@ -27,23 +27,24 @@ if (!basePath) {
   );
 }
 
-// Resolve the canonical app URL from Replit domains or a fallback
+// Resolve the canonical app URL — prefer REPLIT_DOMAINS (set in production),
+// fall back to the custom domain for meta tags and Farcaster frame content.
 const replitDomain = process.env.REPLIT_DOMAINS?.split(",")[0]?.trim();
 const appUrl = replitDomain
   ? `https://${replitDomain}`
-  : "https://candy-crush.replit.app";
+  : "https://basepop.space";
 
 // Build the Farcaster Frame v2 (MiniApp) meta-tag content
 const frameContent = JSON.stringify({
   version: "next",
-  imageUrl: `${appUrl}/og-image.svg`,
+  imageUrl: `https://basepop.space/og-image.svg`,
   button: {
-    title: "🍬 Play Candy Crush",
+    title: "🎮 Play Base Pop",
     action: {
       type: "launch_frame",
-      name: "Candy Crush on Base",
-      url: appUrl,
-      splashImageUrl: `${appUrl}/og-image.svg`,
+      name: "Base Pop",
+      url: "https://basepop.space",
+      splashImageUrl: `https://basepop.space/og-image.svg`,
       splashBackgroundColor: "#1a0a3a",
     },
   },

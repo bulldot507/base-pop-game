@@ -1,6 +1,6 @@
-# Candy Crush Match-3 Game
+# Base Pop — Match-3 on Base
 
-A browser-based Match-3 puzzle game inspired by Candy Crush, with Base Network wallet integration and on-chain high score leaderboard.
+A browser-based Match-3 puzzle game branded as Base Pop, with Base Network wallet integration and on-chain high score leaderboard. Custom domain: https://basepop.space
 
 ## Run & Operate
 

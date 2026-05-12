@@ -12,7 +12,7 @@ import { useSoundFx } from "../hooks/useSoundFx";
 const APP_URL = import.meta.env.VITE_APP_URL as string ?? "";
 
 function buildWarpcastUrl(score: number): string {
-  const text = `I just scored ${score.toLocaleString()} pts in 🍬 Candy Crush on Base!\n\nMatch-3 with on-chain leaderboard. Can you beat me?`;
+  const text = `I just scored ${score.toLocaleString()} pts in 🎮 Base Pop on Base!\n\nMatch-3 with on-chain leaderboard. Can you beat me?`;
   const params = new URLSearchParams();
   params.set("text", text);
   if (APP_URL) params.append("embeds[]", APP_URL);
@@ -120,7 +120,7 @@ export default function GamePage() {
                   backgroundClip: "text", letterSpacing: "-0.02em",
                 }}
               >
-                Candy Crush
+                Base Pop
               </h1>
               <Sparkles size={16} style={{ color: "#f59e0b", filter: "drop-shadow(0 0 6px #f59e0b)" }} />
             </div>

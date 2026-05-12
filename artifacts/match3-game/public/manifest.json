@@ -1,8 +1,8 @@
 {
-  "name": "Candy Crush · Match-3 on Base",
-  "short_name": "Candy Crush",
+  "name": "Base Pop · Match-3 on Base",
+  "short_name": "Base Pop",
   "description": "A Match-3 puzzle game with on-chain high scores on Base Mainnet. Connect your wallet, match candies, and save your score forever.",
-  "start_url": "/",
+  "start_url": "https://basepop.space/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0d0520",
@@ -21,7 +21,7 @@
       "src": "/og-image.svg",
       "sizes": "1200x630",
       "type": "image/svg+xml",
-      "label": "Candy Crush Match-3 game board"
+      "label": "Base Pop Match-3 game board"
     }
   ]
 }

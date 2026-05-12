@@ -4,11 +4,6 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import type { Plugin } from "vite";
 
-// PORT and BASE_PATH are injected by Replit workflows.
-// On Vercel (or any other static host) they are absent — safe to ignore.
-const port = process.env.PORT ? Number(process.env.PORT) : undefined;
-const basePath = process.env.BASE_PATH ?? "/";
-
 const appUrl = process.env.VITE_APP_URL ?? "https://basepop.space";
 
 const frameContent = JSON.stringify({
@@ -38,7 +33,7 @@ function htmlInjectPlugin(): Plugin {
 }
 
 export default defineConfig({
-  base: basePath,
+  plugins: [htmlInjectPlugin(), react(), tailwindcss()],
   define: {
     "import.meta.env.VITE_CDP_API_KEY": JSON.stringify(
       process.env.VITE_CDP_API_KEY ?? process.env.CDP_API_KEY ?? ""
@@ -49,35 +44,29 @@ export default defineConfig({
     "import.meta.env.VITE_APP_URL": JSON.stringify(appUrl),
     global: "globalThis",
   },
-  optimizeDeps: {
-    include: ["buffer"],
-  },
-  plugins: [
-    htmlInjectPlugin(),
-    react(),
-    tailwindcss(),
-  ],
   resolve: {
     alias: {
-      "@": path.resolve(import.meta.dirname, "src"),
-      "@shared": path.resolve(import.meta.dirname, "src"),
-      "@assets": path.resolve(import.meta.dirname, "..", "..", "attached_assets"),
+      "@": path.resolve(__dirname, "src"),
+      "@shared": path.resolve(__dirname, "src"),
       buffer: "buffer/",
     },
     dedupe: ["react", "react-dom"],
   },
-  root: path.resolve(import.meta.dirname),
+  optimizeDeps: {
+    include: ["buffer"],
+  },
   build: {
-    outDir: path.resolve(import.meta.dirname, "dist/public"),
+    outDir: "dist",
     emptyOutDir: true,
   },
   server: {
-    ...(port !== undefined && { port, strictPort: true }),
+    // PORT is injected by Replit workflows; ignored on Vercel (build only, no dev server).
+    ...(process.env.PORT ? { port: Number(process.env.PORT), strictPort: true } : {}),
     host: "0.0.0.0",
     allowedHosts: true,
   },
   preview: {
-    ...(port !== undefined && { port }),
+    ...(process.env.PORT ? { port: Number(process.env.PORT) } : {}),
     host: "0.0.0.0",
     allowedHosts: true,
   },

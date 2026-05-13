@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { createPublicClient, http, parseAbiItem } from "viem";
 import { base } from "viem/chains";
 import { LEADERBOARD_ABI } from "../lib/leaderboardAbi";
@@ -21,14 +21,16 @@ export interface LeaderboardEntry {
   score: bigint;
 }
 
-// Base RPC limits getLogs to a 10 000-block range — use 5 000 to stay safe
-const CHUNK = 5_000n;
-// Fetch the last ~46 days of blocks (~2 M blocks at Base's 2-second block time).
-// For a freshly deployed contract this covers all events without fetching the
-// entire chain history (which would require thousands of requests).
-const LOOKBACK = 2_000_000n;
+// 100-block chunks — conservative to prevent RPC timeouts on Base Mainnet.
+const CHUNK = 100n;
+// Look back ~27 hours of Base blocks (2 s/block × 50 000 blocks).
+// At 100-block chunks this is 500 requests — fast and reliable.
+const LOOKBACK = 50_000n;
 
-interface FetchProgress {
+// Auto-refresh interval: 30 seconds
+const POLL_INTERVAL_MS = 30_000;
+
+export interface FetchProgress {
   fetched: number;
   total: number;
   pct: number;
@@ -81,19 +83,15 @@ async function fetchAllEvents(
       100,
       Math.round(Number((processedBlocks * 100n) / totalBlocks))
     );
-    onProgress({
-      fetched: Number(processedBlocks),
-      total: Number(totalBlocks),
-      pct,
-    });
+    onProgress({ fetched: Number(processedBlocks), total: Number(totalBlocks), pct });
 
     cursor = toBlock + 1n;
   }
 
-  // Sort highest score first, deduplicate by address, take top 1 000
+  // Deduplicate by address (keep best score), sort descending, top 100 only
   const entries: LeaderboardEntry[] = [...scoreMap.entries()]
     .sort((a, b) => (a[1] > b[1] ? -1 : a[1] < b[1] ? 1 : 0))
-    .slice(0, 1000)
+    .slice(0, 100)
     .map(([address, score], i) => ({
       rank: i + 1,
       address: address as `0x${string}`,
@@ -109,28 +107,49 @@ export function useLeaderboard() {
   const [progress, setProgress] = useState<FetchProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const refresh = useCallback(async () => {
     if (!CONTRACT_CONFIGURED) return;
+
+    // Cancel any in-flight fetch
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setLoading(true);
     setError(null);
     setProgress(null);
 
-    const controller = new AbortController();
-
     try {
       const data = await fetchAllEvents((p) => setProgress(p), controller.signal);
-      setEntries(data);
-      setLastFetched(new Date());
+      if (!controller.signal.aborted) {
+        setEntries(data);
+        setLastFetched(new Date());
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load leaderboard");
+      if (!controller.signal.aborted) {
+        setError(e instanceof Error ? e.message : "Failed to load leaderboard");
+      }
     } finally {
-      setLoading(false);
-      setProgress(null);
+      if (!controller.signal.aborted) {
+        setLoading(false);
+        setProgress(null);
+      }
     }
-
-    return () => controller.abort();
   }, []);
+
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    if (!CONTRACT_CONFIGURED) return;
+    const id = setInterval(() => {
+      void refresh();
+    }, POLL_INTERVAL_MS);
+    return () => {
+      clearInterval(id);
+      abortRef.current?.abort();
+    };
+  }, [refresh]);
 
   const {
     writeContract,

@@ -64,6 +64,11 @@ export default defineConfig({
     ...(process.env.PORT ? { port: Number(process.env.PORT), strictPort: true } : {}),
     host: "0.0.0.0",
     allowedHosts: true,
+    headers: {
+      // Farcaster crawler discovery header
+      "Link": '<https://basepop.space/.well-known/farcaster.json>; rel="alternate"; type="application/vnd.farcaster.snap+json"',
+      "Access-Control-Allow-Origin": "*",
+    },
   },
   preview: {
     ...(process.env.PORT ? { port: Number(process.env.PORT) } : {}),

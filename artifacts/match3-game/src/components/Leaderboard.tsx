@@ -1,15 +1,8 @@
 import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  X,
-  Trophy,
-  RefreshCw,
-  Loader2,
-  Send,
-  CheckCircle2,
-  AlertCircle,
-  ExternalLink,
-  RotateCcw,
+  X, Trophy, RefreshCw, Loader2, Send,
+  CheckCircle2, AlertCircle, ExternalLink, RotateCcw, User,
 } from "lucide-react";
 import { useAccount } from "wagmi";
 import { useLeaderboard } from "../hooks/useLeaderboard";
@@ -61,11 +54,14 @@ export default function Leaderboard({ open, onClose, currentScore }: Leaderboard
     }
   }, [open, contractConfigured]);
 
+  // Find the connected user's on-chain entry (may be outside top 100)
   const myEntry = address
     ? entries.find((e) => e.address.toLowerCase() === address.toLowerCase())
     : null;
   const myRank = myEntry?.rank ?? null;
   const myOnChainScore = myEntry ? Number(myEntry.score) : 0;
+  const isInTop100 = myEntry !== null && myEntry !== undefined;
+
   const canSubmit =
     isConnected && currentScore > 0 && currentScore > myOnChainScore && contractConfigured;
 
@@ -104,21 +100,17 @@ export default function Leaderboard({ open, onClose, currentScore }: Leaderboard
             }}
           >
             {/* ── Header ── */}
-            <div
-              style={{
-                display: "flex", alignItems: "center", gap: 10,
-                padding: "18px 20px 14px",
-                borderBottom: "1px solid rgba(255,255,255,0.06)", flexShrink: 0,
-              }}
-            >
-              <div
-                style={{
-                  width: 38, height: 38, borderRadius: 11,
-                  background: "linear-gradient(135deg, #fbbf24, #f59e0b)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  flexShrink: 0, boxShadow: "0 4px 12px rgba(251,191,36,0.4)",
-                }}
-              >
+            <div style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "18px 20px 14px",
+              borderBottom: "1px solid rgba(255,255,255,0.06)", flexShrink: 0,
+            }}>
+              <div style={{
+                width: 38, height: 38, borderRadius: 11,
+                background: "linear-gradient(135deg, #fbbf24, #f59e0b)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0, boxShadow: "0 4px 12px rgba(251,191,36,0.4)",
+              }}>
                 <Trophy size={20} color="#1c0e41" />
               </div>
               <div style={{ flex: 1 }}>
@@ -126,20 +118,19 @@ export default function Leaderboard({ open, onClose, currentScore }: Leaderboard
                   Leaderboard
                 </div>
                 <div style={{ fontSize: 11, color: "rgba(252,211,77,0.5)", marginTop: 1 }}>
-                  Base Mainnet · Top 1000 Players
+                  Base Mainnet · Top 100 Players · Refreshes every 30s
                 </div>
               </div>
-
               <button
                 onClick={() => void refresh()}
                 disabled={loading}
+                title="Refresh"
                 style={{
                   background: "transparent", border: "none",
                   cursor: loading ? "default" : "pointer",
                   color: "rgba(252,211,77,0.6)", padding: 6, borderRadius: 8,
                   display: "flex", alignItems: "center", justifyContent: "center",
                 }}
-                title="Refresh"
               >
                 <RefreshCw size={15} style={{ animation: loading ? "spin 1s linear infinite" : "none" }} />
               </button>
@@ -155,7 +146,7 @@ export default function Leaderboard({ open, onClose, currentScore }: Leaderboard
               </button>
             </div>
 
-            {/* ── Progress bar (while loading) ── */}
+            {/* ── Progress bar ── */}
             <AnimatePresence>
               {loading && progress !== null && (
                 <motion.div
@@ -173,7 +164,6 @@ export default function Leaderboard({ open, onClose, currentScore }: Leaderboard
                         {progress.pct}%
                       </span>
                     </div>
-                    {/* Track */}
                     <div style={{ height: 4, borderRadius: 4, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
                       <motion.div
                         animate={{ width: `${progress.pct}%` }}
@@ -186,48 +176,90 @@ export default function Leaderboard({ open, onClose, currentScore }: Leaderboard
                       />
                     </div>
                     <div style={{ fontSize: 10, color: "rgba(255,255,255,0.2)", marginTop: 4 }}>
-                      Fetching in 5 000-block chunks · skipping failed ranges automatically
+                      100-block chunks · skipping failed ranges automatically
                     </div>
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* ── My score + submit ── */}
+            {/* ── MY SCORE sticky header (always visible when connected) ── */}
             {isConnected && (
-              <div
-                style={{
-                  padding: "12px 20px", flexShrink: 0,
-                  borderBottom: "1px solid rgba(255,255,255,0.05)",
-                  background: "rgba(251,191,36,0.04)",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 11, color: "rgba(252,211,77,0.5)", marginBottom: 2 }}>
-                      Your session
-                    </div>
-                    <div style={{ fontSize: 20, fontWeight: 800, color: "#fbbf24", letterSpacing: "-0.02em" }}>
-                      {currentScore.toLocaleString()} pts
-                    </div>
-                    {myRank && (
-                      <div style={{ fontSize: 11, color: "rgba(167,139,250,0.7)", marginTop: 1 }}>
-                        Rank #{myRank} · On-chain best: {myOnChainScore.toLocaleString()}
-                      </div>
-                    )}
+              <div style={{
+                flexShrink: 0,
+                borderBottom: "1px solid rgba(255,255,255,0.05)",
+                background: isInTop100
+                  ? "rgba(251,191,36,0.06)"
+                  : "rgba(167,139,250,0.06)",
+              }}>
+                {/* Score + rank row */}
+                <div style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  padding: "10px 20px 8px", flexWrap: "wrap",
+                }}>
+                  {/* User icon */}
+                  <div style={{
+                    width: 30, height: 30, borderRadius: 8, flexShrink: 0,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    background: isInTop100
+                      ? "linear-gradient(135deg, rgba(251,191,36,0.3), rgba(245,158,11,0.2))"
+                      : "rgba(167,139,250,0.15)",
+                    border: isInTop100
+                      ? "1px solid rgba(251,191,36,0.4)"
+                      : "1px solid rgba(167,139,250,0.25)",
+                  }}>
+                    <User size={14} color={isInTop100 ? "#fbbf24" : "#a78bfa"} />
                   </div>
 
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", marginBottom: 1, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                      Your score
+                    </div>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                      <span style={{
+                        fontSize: 18, fontWeight: 800, letterSpacing: "-0.02em",
+                        color: isInTop100 ? "#fbbf24" : "#c4b5fd",
+                      }}>
+                        {myOnChainScore > 0 ? myOnChainScore.toLocaleString() : currentScore > 0 ? `${currentScore.toLocaleString()} (unsaved)` : "—"}
+                      </span>
+                      {myRank && (
+                        <span style={{
+                          fontSize: 11, fontWeight: 700,
+                          color: "rgba(252,211,77,0.6)",
+                          background: "rgba(251,191,36,0.1)",
+                          padding: "1px 7px", borderRadius: 5,
+                        }}>
+                          #{myRank}
+                        </span>
+                      )}
+                      {!myRank && myOnChainScore === 0 && (
+                        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.25)" }}>
+                          Not ranked yet
+                        </span>
+                      )}
+                      {!isInTop100 && myOnChainScore > 0 && (
+                        <span style={{
+                          fontSize: 10, color: "rgba(167,139,250,0.6)",
+                          background: "rgba(167,139,250,0.1)",
+                          padding: "1px 7px", borderRadius: 5,
+                        }}>
+                          Outside top 100
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Save score button */}
                   {contractConfigured && (
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
                       {isConfirmed && (
                         <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#4ade80" }}>
-                          <CheckCircle2 size={12} />
-                          Score saved on-chain!
+                          <CheckCircle2 size={12} /> Saved!
                         </div>
                       )}
                       {isSubmitError && (
-                        <div style={{ fontSize: 10, color: "#f87171", maxWidth: 160, textAlign: "right" }}>
-                          {submitError?.message?.slice(0, 60)}…
+                        <div style={{ fontSize: 10, color: "#f87171", maxWidth: 150, textAlign: "right" }}>
+                          {submitError?.message?.slice(0, 50)}…
                         </div>
                       )}
                       {txHash && !isConfirmed && (
@@ -246,37 +278,46 @@ export default function Leaderboard({ open, onClose, currentScore }: Leaderboard
                         whileHover={canSubmit ? { scale: 1.04 } : {}}
                         style={{
                           display: "flex", alignItems: "center", gap: 6,
-                          padding: "7px 14px", borderRadius: 10,
+                          padding: "6px 12px", borderRadius: 9,
                           border: "1px solid rgba(251,191,36,0.35)",
                           background: canSubmit
                             ? "linear-gradient(135deg, rgba(251,191,36,0.2), rgba(245,158,11,0.15))"
                             : "rgba(255,255,255,0.04)",
                           cursor: canSubmit ? "pointer" : "not-allowed",
                           color: canSubmit ? "#fcd34d" : "rgba(255,255,255,0.25)",
-                          fontSize: 12, fontWeight: 700,
+                          fontSize: 11, fontWeight: 700,
                           opacity: isSubmitting || isConfirming ? 0.7 : 1,
                         }}
                       >
                         {isSubmitting || isConfirming
-                          ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />
-                          : <Send size={13} />}
-                        {isConfirming ? "Confirming…" : isSubmitting ? "Sign in wallet…" : "Save Score On-Chain"}
+                          ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} />
+                          : <Send size={12} />}
+                        {isConfirming ? "Confirming…" : isSubmitting ? "Signing…" : "Save Score"}
                       </motion.button>
                     </div>
                   )}
                 </div>
+
+                {/* Address hint */}
+                {address && (
+                  <div style={{
+                    padding: "0 20px 8px",
+                    fontSize: 10, color: "rgba(255,255,255,0.2)",
+                    fontFamily: "monospace",
+                  }}>
+                    {shortAddr(address)}
+                  </div>
+                )}
               </div>
             )}
 
-            {/* ── Contract not configured ── */}
+            {/* ── Contract not configured notice ── */}
             {!contractConfigured && (
-              <div
-                style={{
-                  padding: "14px 20px", flexShrink: 0,
-                  borderBottom: "1px solid rgba(255,255,255,0.05)",
-                  background: "rgba(99,102,241,0.06)",
-                }}
-              >
+              <div style={{
+                padding: "14px 20px", flexShrink: 0,
+                borderBottom: "1px solid rgba(255,255,255,0.05)",
+                background: "rgba(99,102,241,0.06)",
+              }}>
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
                   <AlertCircle size={14} style={{ color: "#a78bfa", flexShrink: 0, marginTop: 1 }} />
                   <div>
@@ -291,10 +332,9 @@ export default function Leaderboard({ open, onClose, currentScore }: Leaderboard
               </div>
             )}
 
-            {/* ── Scrollable list ── */}
+            {/* ── Scrollable top-100 list ── */}
             <div ref={listRef} style={{ flex: 1, overflowY: "auto", padding: "8px 0", minHeight: 0 }}>
 
-              {/* Initial loading spinner (before progress kicks in) */}
               {loading && progress === null && entries.length === 0 && (
                 <div style={{
                   display: "flex", flexDirection: "column", alignItems: "center",
@@ -306,14 +346,12 @@ export default function Leaderboard({ open, onClose, currentScore }: Leaderboard
                 </div>
               )}
 
-              {/* Partial results while still loading */}
               {loading && entries.length > 0 && (
                 <div style={{ padding: "6px 20px 2px", fontSize: 11, color: "rgba(252,211,77,0.4)" }}>
                   Showing {entries.length} result{entries.length !== 1 ? "s" : ""} so far…
                 </div>
               )}
 
-              {/* Error state with retry */}
               {error && !loading && (
                 <div style={{ padding: "32px 20px", textAlign: "center" }}>
                   <AlertCircle size={24} style={{ color: "#f87171", margin: "0 auto 10px", display: "block" }} />
@@ -334,7 +372,6 @@ export default function Leaderboard({ open, onClose, currentScore }: Leaderboard
                 </div>
               )}
 
-              {/* Empty state */}
               {!loading && !error && entries.length === 0 && contractConfigured && (
                 <div style={{ padding: "48px 20px", textAlign: "center", color: "rgba(252,211,77,0.4)", fontSize: 13 }}>
                   <Trophy size={32} style={{ margin: "0 auto 10px", display: "block", opacity: 0.3 }} />
@@ -342,7 +379,6 @@ export default function Leaderboard({ open, onClose, currentScore }: Leaderboard
                 </div>
               )}
 
-              {/* Entries */}
               {entries.map((entry) => {
                 const isMe = address && entry.address.toLowerCase() === address.toLowerCase();
                 const rankBg = RANK_COLORS[entry.rank];
@@ -356,16 +392,13 @@ export default function Leaderboard({ open, onClose, currentScore }: Leaderboard
                       borderLeft: isMe ? "2px solid rgba(251,191,36,0.5)" : "2px solid transparent",
                     }}
                   >
-                    {/* Rank badge */}
-                    <div
-                      style={{
-                        width: 30, height: 30, borderRadius: 8, flexShrink: 0,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        background: rankBg ?? "rgba(255,255,255,0.06)",
-                      }}
-                    >
+                    <div style={{
+                      width: 30, height: 30, borderRadius: 8, flexShrink: 0,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      background: rankBg ?? "rgba(255,255,255,0.06)",
+                    }}>
                       <span style={{
-                        fontSize: entry.rank > 99 ? 9 : entry.rank > 9 ? 11 : 13,
+                        fontSize: entry.rank > 9 ? 11 : 13,
                         fontWeight: 800,
                         color: rankBg ? "#1c0e41" : "rgba(255,255,255,0.5)",
                       }}>
@@ -373,7 +406,6 @@ export default function Leaderboard({ open, onClose, currentScore }: Leaderboard
                       </span>
                     </div>
 
-                    {/* Address */}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{
                         fontSize: 13, fontWeight: isMe ? 700 : 500,
@@ -393,7 +425,6 @@ export default function Leaderboard({ open, onClose, currentScore }: Leaderboard
                       </div>
                     </div>
 
-                    {/* Score */}
                     <div style={{
                       fontSize: 14, fontWeight: 800,
                       color: entry.rank <= 3 ? "#fbbf24" : "rgba(255,255,255,0.8)",
@@ -407,17 +438,15 @@ export default function Leaderboard({ open, onClose, currentScore }: Leaderboard
             </div>
 
             {/* ── Footer ── */}
-            <div
-              style={{
-                padding: "8px 20px", flexShrink: 0,
-                borderTop: "1px solid rgba(255,255,255,0.05)",
-                display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
-              }}
-            >
+            <div style={{
+              padding: "8px 20px", flexShrink: 0,
+              borderTop: "1px solid rgba(255,255,255,0.05)",
+              display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
+            }}>
               <span style={{ fontSize: 10, color: "rgba(255,255,255,0.2)" }}>
                 {lastFetched
-                  ? `Updated ${lastFetched.toLocaleTimeString()} · 5 000-block chunks`
-                  : "Chunks: 5 000 blocks · Skips failed ranges"}
+                  ? `Updated ${lastFetched.toLocaleTimeString()} · auto-refresh 30s`
+                  : "100-block chunks · Base Mainnet"}
               </span>
               {lastFetched && (
                 <a

@@ -1,18 +1,18 @@
 {
   "accountAssociation": {
-    "header": "eyJmaWQiOjEsInR5cGUiOiJjdXN0b2R5IiwiY2hhaW5JZCI6ImVpcDE1NToxIn0",
-    "payload": "eyJkb21haW4iOiJiYXNlcG9wLnNwYWNlIn0",
-    "signature": "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    "header": "",
+    "payload": "",
+    "signature": ""
   },
   "frame": {
     "version": "1",
     "name": "Base Pop",
     "iconUrl": "https://basepop.space/og-image.svg",
     "homeUrl": "https://basepop.space",
+    "canonicalDomain": "basepop.space",
     "imageUrl": "https://basepop.space/og-image.svg",
     "buttonTitle": "Play Base Pop",
     "splashImageUrl": "https://basepop.space/og-image.svg",
-    "splashBackgroundColor": "#1a0a3a",
-    "webhookUrl": "https://basepop.space/.well-known/farcaster.json"
+    "splashBackgroundColor": "#1a0a3a"
   }
 }
